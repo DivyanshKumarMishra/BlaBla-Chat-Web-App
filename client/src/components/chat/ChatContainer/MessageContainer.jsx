@@ -311,7 +311,7 @@ function MessageContainer({
           {renderMessages()}
           {getTypingIndicator()}
           <div ref={scrollRef}></div>
-          <Modal
+          {/* <Modal
             open={modalOpen}
             closeModal={() => setModalOpen(false)}
             className="w-4/5 md:max-w-[80vw] h-[80vh]"
@@ -352,7 +352,7 @@ function MessageContainer({
                 </button>
               </div>
             </div>
-          </Modal>
+          </Modal> */}
         </>
       )}
     </div>

@@ -47,6 +47,14 @@ function MessageBar({ setNotificationText = () => {} }) {
     };
   }, [emojiRef]);
 
+  // const handleFileClick = () => {
+  //   fileInputRef.current && fileInputRef.current.click();
+  // };
+
+  // const handleRemoveFile = (index) => {
+  //   setFileUrls((prev) => prev.filter((_, i) => i !== index));
+  // };
+
   const handleInputChange = (e) => {
     setMessage(e.target.value);
     if (!isTyping) {
@@ -61,10 +69,6 @@ function MessageBar({ setNotificationText = () => {} }) {
     }, 1000);
   };
 
-  const handleFileClick = () => {
-    fileInputRef.current && fileInputRef.current.click();
-  };
-
   const handleEmojiClick = () => {
     setOpen(true);
   };
@@ -73,32 +77,28 @@ function MessageBar({ setNotificationText = () => {} }) {
     setMessage((msg) => `${msg}${emoji.emoji}`);
   };
 
-  const handleRemoveFile = (index) => {
-    setFileUrls((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleFileChange = async (e) => {
-    try {
-      if (!e.target.files) return;
-      const formData = new FormData();
-      const files = Array.from(e.target.files);
-      dispatch(setIsUploading(true));
-      files.forEach((file) => formData.append('files', file));
-      // const response = await axiosInstance.post(UPLOAD_FILE_ROUTE, formData, { withCredentials: true, headers: {
-      //   'Content-Type': 'multipart/form-data'
-      // }, params: { timestamp: Date.now() }});
-      // if(response.status === 201) {
-      //   dispatch(setIsUploading(false))
-      //   setFileUrls(Array.from(response.data.filePaths));
-      // }
-    } catch (error) {
-      console.log(error);
-      dispatch(setIsUploading(false));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null;
-      }
-    }
-  };
+  // const handleFileChange = async (e) => {
+  //   try {
+  //     if (!e.target.files) return;
+  //     const formData = new FormData();
+  //     const files = Array.from(e.target.files);
+  //     dispatch(setIsUploading(true));
+  //     files.forEach((file) => formData.append('files', file));
+  //     // const response = await axiosInstance.post(UPLOAD_FILE_ROUTE, formData, { withCredentials: true, headers: {
+  //     //   'Content-Type': 'multipart/form-data'
+  //     // }, params: { timestamp: Date.now() }});
+  //     // if(response.status === 201) {
+  //     //   dispatch(setIsUploading(false))
+  //     //   setFileUrls(Array.from(response.data.filePaths));
+  //     // }
+  //   } catch (error) {
+  //     console.log(error);
+  //     dispatch(setIsUploading(false));
+  //     if (fileInputRef.current) {
+  //       fileInputRef.current.value = null;
+  //     }
+  //   }
+  // };
 
   const sendNewMessage = async (e) => {
     try {
@@ -192,17 +192,17 @@ function MessageBar({ setNotificationText = () => {} }) {
             value={message}
             onChange={handleInputChange}
           />
-          <button type="button" onClick={handleFileClick} disabled={!!message}>
+          {/* <button type="button" onClick={handleFileClick} disabled={!!message}>
             <PaperClipIcon className="size-6 text-primary" />
-          </button>
-          <input
+          </button> */}
+          {/* <input
             ref={fileInputRef}
             id="fileInput"
             type="file"
             hidden
             multiple
             onChange={handleFileChange}
-          />
+          /> */}
           <EmojiPick
             handleEmojiClick={handleEmojiClick}
             emojiRef={emojiRef}
@@ -210,7 +210,7 @@ function MessageBar({ setNotificationText = () => {} }) {
             handleEmoji={handleEmoji}
           />
         </div>
-        {fileUrls.length > 0 && (
+        {/* {fileUrls.length > 0 && (
           <Tooltip
             content="New Channel"
             position="top"
@@ -224,7 +224,7 @@ function MessageBar({ setNotificationText = () => {} }) {
               <EyeIcon className="ml-2 size-7 text-primary" />
             </button>
           </Tooltip>
-        )}
+        )} */}
         <button
           type="button"
           onClick={sendNewMessage}

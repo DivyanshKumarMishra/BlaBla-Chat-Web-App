@@ -1,81 +1,127 @@
-import React, { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
-import ChatContainer from '../../components/chat/ChatContainer/ChatContainer'
-import ContactsContainer from '../../components/chat/ContactsBar/ContactsContainer'
-import EmptyChatContainer from '../../components/chat/EmptyChat/EmptyChatContainer'
-import Notification from '../../components/common/Notification'
-import { setChannels, setDMs } from '../../slices/ChatSlice'
-import axiosInstance from '../../services/axios'
-import { CHANNEL_ROUTE, CHAT_ROUTE } from '../../utils/constants'
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import ChatContainer from '../../components/chat/ChatContainer/ChatContainer';
+import ContactsContainer from '../../components/chat/ContactsBar/ContactsContainer';
+import EmptyChatContainer from '../../components/chat/EmptyChat/EmptyChatContainer';
+import Notification from '../../components/common/Notification';
+import AppHeader from '../../components/common/Header';
+import Drawer from '../../components/common/Drawer';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../../services/axios';
+import { GET_ALL_CHATS_URL, LOGOUT_URL } from '../../utils/constants';
+import { logout } from '../../slices/UserSlice';
+import { setChats } from '../../slices/ChatSlice';
 
 function Chat() {
-  const { profileSetup } = useSelector((state) => state.userData.user)
-  const { selectedChatType, selectedChat } = useSelector((state) => state.chatData)
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { selectedChat } = useSelector((state) => state.chatData);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [notificationText, setNotificationText] = useState({
-      message: '',
-      description: '',
-      type: '',
-    });
-  const [show, setShow] = useState(false);
+    message: '',
+    description: '',
+    type: '',
+  });
 
-  const handleSidebar = () => {
-    // console.log(isSidebarOpen);
-    setIsSidebarOpen(prev => !prev)
-  }
-
-  async function getDMs(){
+  async function fetchChats() {
     try {
-      const response = await axiosInstance.get(`${CHAT_ROUTE}/get-dms`, {withCredentials: true})
-      if(response.status === 200){
-        // console.log(response.data.dms);
-        dispatch(setDMs(response.data.dms))
+      const response = await axiosInstance.get(GET_ALL_CHATS_URL);
+      if (response.status === 200) {
+        dispatch(setChats(response.data));
       }
     } catch (error) {
-      console.log(error.response.data);
-    }
-  }
-
-  async function getChannels(){
-    try {
-      const response = await axiosInstance.get(`${CHANNEL_ROUTE}/get-all-channels`, {withCredentials: true})
-      if(response.status === 200){
-        // console.log(response.data.channels);
-        dispatch(setChannels(response.data.channels))
-      }
-    } catch (error) {
-      console.log(error.response.data);
+      setNotificationText({
+        message: 'Failed to fetch chats',
+        type: 'error',
+        description: error.message,
+      });
     }
   }
 
   useEffect(() => {
-    if (!profileSetup) navigate('/profile')
-  }, [profileSetup, navigate])
+    fetchChats();
+  }, []);
+
+  const handleSidebar = () => {
+    // console.log('clicked');
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await axiosInstance.post(
+        LOGOUT_URL,
+        {},
+        { withCredentials: true }
+      );
+      const { message, details } = response.data;
+      if (response.status === 200) {
+        setNotificationText({
+          message: message,
+          type: 'success',
+          details: details,
+        });
+        setTimeout(() => {
+          setNotificationText({});
+          dispatch(logout());
+          navigate('/auth', { replace: true });
+        }, 1000);
+      }
+    } catch (error) {
+      const { message, details } = error.response.data;
+      setNotificationText({
+        message: message,
+        type: 'error',
+        details: details,
+      });
+      setTimeout(() => {
+        setNotificationText({});
+      }, 1000);
+    }
+  };
 
   return (
-    <div className="h-screen flex flex-col md:flex-row text-white bg-gray-200 overflow-hidden">
-      <Notification
-        message={notificationText.message}
-        description={notificationText.description}
-        show={show}
-        type={notificationText.type}
-        onClose={() => setShow(false)}
-      />
-      <div
-        className={`${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform transform w-full md:w-1/3 bg-primary fixed top-0 left-0 h-full z-20 md:relative`}
-      >
-        <ContactsContainer handleSidebar={handleSidebar} setNotificationText={setNotificationText} setShow={setShow} getDMs={getDMs} getChannels={getChannels}/>
-      </div>
-      <div className="h-full flex-1 bg-indigo-100">
-        {selectedChat ? <ChatContainer handleSidebar={handleSidebar} getDMs={getDMs}/> : <EmptyChatContainer handleSidebar={handleSidebar}/>}
+    <div className="h-screen w-screen flex flex-col overflow-hidden text-white">
+      <AppHeader onLogoClick={handleSidebar} handleLogout={handleLogout} />
+
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Mobile Sidebar */}
+        <Drawer open={isSidebarOpen} setOpen={handleSidebar} side="left">
+          <ContactsContainer
+            isSidebarOpen={isSidebarOpen}
+            handleSidebar={handleSidebar}
+            handleLogout={handleLogout}
+          />
+        </Drawer>
+
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-1/3 bg-white border-r-3 border-gray-300 shadow-lg mt-14">
+          <ContactsContainer
+            handleLogout={handleLogout}
+            handleSidebar={handleSidebar}
+          />
+        </div>
+
+        {/* Chat container */}
+        <div className="flex-1 flex flex-col bg-indigo-200">
+          <Notification
+            message={notificationText.message}
+            description={notificationText.description}
+            type={notificationText.type}
+            onClose={() => setNotificationText({})}
+          />
+
+          <div className="flex-1 flex-col h-full mt-14">
+            {selectedChat ? (
+              <ChatContainer handleSidebar={handleSidebar} setNotificationText={setNotificationText}/>
+            ) : (
+              <EmptyChatContainer handleSidebar={handleSidebar} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Chat
+export default Chat;

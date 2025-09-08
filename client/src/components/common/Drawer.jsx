@@ -1,6 +1,5 @@
-import React from 'react'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 function Drawer({
   open = false,
@@ -8,9 +7,11 @@ function Drawer({
   side = 'right', // 'left' | 'right' | 'top' | 'bottom'
   title = '',
   background = 'bg-white',
-  width,  // e.g., 'w-[500px] max-w-[90vw]'
+  width = 'w-screen', // e.g., 'w-[500px] max-w-[90vw]'
   height, // e.g., 'h-[300px] max-h-[50vh]'
   children,
+  overlayBelowHeader = true, // 👈 new prop
+  showCloseButton = false,
 }) {
   const positionClasses = {
     right: 'inset-y-0 right-0 pl-10',
@@ -27,37 +28,57 @@ function Drawer({
   };
 
   const sizeClasses = `${width ?? ''} ${height ?? ''}`;
+  const flexDirection =
+    side === 'top' || side === 'bottom' ? 'flex-col' : 'flex';
 
-  const flexDirection = side === 'top' || side === 'bottom' ? 'flex-col' : 'flex';
-
+  // Overlay style → either full or below header
+  const overlayClasses = overlayBelowHeader
+    ? 'fixed top-14 inset-x-0 bottom-0' // leaves header clickable
+    : 'fixed inset-0';
   return (
-    <Dialog open={open} onClose={setOpen} className="relative z-10">
-      <div className="fixed inset-0" aria-hidden="true" />
-      <div className="fixed inset-0 overflow-hidden">
+    <Dialog open={open} onClose={setOpen} className="relative z-10 md:hidden">
+      {/* Backdrop */}
+      <div className={overlayClasses} aria-hidden="true" />
+
+      <div className={overlayClasses + ' overflow-hidden'}>
         <div className="absolute inset-0 overflow-hidden">
-          <div className={`pointer-events-none fixed ${positionClasses[side]} ${flexDirection}`}>
+          <div
+            className={`pointer-events-none ${
+              overlayBelowHeader ? overlayClasses : positionClasses[side]
+            } ${flexDirection}`}
+          >
             <DialogPanel
               transition
-              className={`pointer-events-auto transform transition duration-500 ease-in-out sm:duration-700 shadow-xl ${transformClasses[side]} ${sizeClasses} ${background}`}
+              className={`pointer-events-auto transform transition duration-500 ease-in-out sm:duration-700 shadow-xl ${transformClasses[side]} ${sizeClasses}`}
             >
-              <div className="flex h-full flex-col overflow-y-auto py-3">
-                <div className="relative px-4 sm:px-6">
-                  <div className="flex items-start justify-between">
-                    {title && <DialogTitle className="text-base font-semibold text-gray-900">{title}</DialogTitle>}
-                    <div className="ml-3 flex h-7 items-center">
-                      <button
-                        type="button"
-                        onClick={() => setOpen(false)}
-                        className="absolute top-0 right-0 mr-4 p-1 rounded-full bg-white text-primary hover:text-white hover:bg-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      >
-                        <span className="absolute -inset-2.5" />
-                        <span className="sr-only">Close panel</span>
-                        <XMarkIcon className="size-6" aria-hidden="true" />
-                      </button>
+              <div
+                className={`relative flex h-full flex-col overflow-y-auto shadow-xl ${background}`}
+              >
+                {showCloseButton || title ? (
+                  <div className="px-4 sm:px-6">
+                    <div className="flex items-start justify-between">
+                      {title && (
+                        <DialogTitle className="text-base font-semibold text-gray-900">
+                          {title}
+                        </DialogTitle>
+                      )}
+                      <div className="ml-3 flex h-7 items-center">
+                        <button
+                          type="button"
+                          onClick={() => setOpen(false)}
+                          className="absolute top-0 right-0 mr-4 p-1 rounded-full bg-white text-primary hover:text-white hover:bg-primary"
+                        >
+                          <span className="absolute -inset-2.5" />
+                          <span className="sr-only">Close panel</span>
+                          <XMarkIcon className="size-6" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="relative mt-3 flex-1 px-4 sm:px-6">{children}</div>
+                ) : null}
+
+                {/* Drawer Content */}
+                <div className="relative flex-1">{children}</div>
               </div>
             </DialogPanel>
           </div>
@@ -67,4 +88,4 @@ function Drawer({
   );
 }
 
-export default Drawer
+export default Drawer;

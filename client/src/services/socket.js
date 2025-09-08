@@ -4,12 +4,9 @@ import { HOST } from '../utils/constants'
 const setupSocket = (queryObject) => {
   const socketOptions = {
     withCredentials: true,
-    // reconnection: true,
-    // reconnectionAttempts: 3,
-    // retries: 3,
-    // requestTimeout: 3000
   }
 
+  console.log(`connecting to ${HOST}`)
   if(queryObject) socketOptions.query = queryObject
 
   const socket = io(HOST, socketOptions)

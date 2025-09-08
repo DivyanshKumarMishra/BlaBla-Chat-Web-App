@@ -1,12 +1,36 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const messageSchema = new mongoose.Schema({
-  sender: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
-  receiver: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false},
-  messageType: {type: String, enum: ['text', 'file'], required: true},
-  content: {type: String, required: function () { return this.messageType === 'text' }},
-  fileUrl: {type: [String], required: function () { return this.messageType === 'file' }},
-  timestamp: {type: Date, default: Date.now(), required: true}
-})
+const messageSchema = new mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    state: {
+      type: String,
+      enum: ['pending', 'delivered'],
+      default: 'pending',
+      required: true,
+    },
+    messageType: { type: String, enum: ['text', 'file'], required: true },
+    content: {
+      type: String,
+      required: function () {
+        return this.messageType === 'text';
+      },
+    },
+    fileUrl: {
+      type: [String],
+      required: function () {
+        return this.messageType === 'file';
+      },
+    },
+    chat: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat', required: true },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model('Message', messageSchema)
+module.exports = mongoose.model('Message', messageSchema);

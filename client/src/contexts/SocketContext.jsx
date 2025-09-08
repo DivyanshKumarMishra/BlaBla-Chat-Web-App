@@ -1,7 +1,15 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setupSocket } from '../services/socket';
-import { addMessagesToChat, sortChannels, sortDMs } from '../slices/ChatSlice';
+import {
+  addMessagesToChat,
+  removeTypingUser,
+  setTypingUser,
+  addToNotifications,
+  sortChats,
+  updateUserStatus,
+} from '../slices/ChatSlice';
 
 const SocketContext = createContext(null);
 
@@ -10,59 +18,102 @@ export function useSocket() {
 }
 
 export function SocketProvider({ children }) {
-  const socket = useRef(null);
   const { user } = useSelector((state) => state.userData);
+  const { selectedChat, notifications } = useSelector(
+    (state) => state.chatData
+  );
   const dispatch = useDispatch();
-  const chat = useSelector(state => state.chatData)
-  const chatRef = useRef(chat)
+  // const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
+  const selectedChatRef = useRef(selectedChat);
+  const notificationsRef = useRef(notifications);
+
+  // useEffect(() => {
+  //   socketRef.current = socket;
+  // }, [socket]);
 
   useEffect(() => {
-      chatRef.current = chat
-  }, [chat])
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
   useEffect(() => {
-    if (user) {
-      socket.current = setupSocket({ userId: user.id });
+    notificationsRef.current = notifications;
+  }, [notifications]);
 
-      // connect socket to server when user logs in
-      socket.current.on('connect', () => console.log('Connected'));
+  useEffect(() => {
+    if (user?.id) {
+      const new_socket = setupSocket({ userId: user.id });
+      new_socket.emit('setup', user.id);
+      setSocket(new_socket);
 
-      const receiveMessage = (message) => {
-        // console.log(message)
-        const {selectedChatType, selectedChat} = chatRef.current    
+      // new_socket.on('online-status', (onlineUsers) => {
+      //   console.log('online-status', onlineUsers);
+      //   dispatch(
+      //     updateUserStatus(
+      //       onlineUsers.map((id) => ({ user_id: id, online: true }))
+      //     )
+      //   );
+      // });
+
+      // new_socket.on('online', (userId) => {
+      //   dispatch(updateUserStatus({ user_id: userId, online: true }));
+      // });
+
+      // new_socket.on('offline', (userId) => {
+      //   dispatch(updateUserStatus({ user_id: userId, online: false }));
+      // });
+
+      new_socket.on('message-received', (newMessage) => {
+        // console.log(newMessage);
         if (
-          selectedChatType !== undefined &&
-          (selectedChat?._id === message.sender._id ||
-            selectedChat?._id === message.receiver._id)
+          !selectedChatRef.current ||
+          selectedChatRef.current._id !== newMessage.chat._id
         ) {
-          dispatch(addMessagesToChat({messages: message, multiple: false}));
+          // if message is received from a chat other than selected chat then give notifications
+          const new_notifications = notificationsRef.current;
+          const existingChatIndex = new_notifications.findIndex(
+            (not) => not.chat?._id === newMessage.chat._id
+          );
+
+          if (existingChatIndex !== -1) {
+            const updatedNotifications = [
+              ...new_notifications.slice(0, existingChatIndex),
+              newMessage,
+              ...new_notifications.slice(existingChatIndex + 1),
+            ];
+            dispatch(addToNotifications(updatedNotifications));
+          } else {
+            dispatch(addToNotifications(newMessage));
+          }
+        } else {
+          dispatch(addMessagesToChat(newMessage));
+          dispatch(sortChats());
         }
-        dispatch(sortDMs({message, userId: user.id}))
+      });
+
+      new_socket.on('typing', ({ userId, roomId }) => {
+        dispatch(setTypingUser({ userId, roomId }));
+      });
+
+      new_socket.on('stop-typing', ({ userId, roomId }) => {
+        dispatch(removeTypingUser({ userId, roomId }));
+      });
+
+      const handleBeforeUnload = () => {
+        // new_socket.emit('offline', user.id);
+        new_socket.disconnect();
       };
 
-      const receiveChannelMessage = (message) => {
-        // console.log(message)
-        const {selectedChatType, selectedChat} = chatRef.current    
-        if (selectedChatType !== undefined && selectedChat?._id === message.channelId)
-        {
-          dispatch(addMessagesToChat({messages: message, multiple: true}));
-        }
-          dispatch(sortChannels(message))
-      };
-
-      socket.current.on('receive-message', receiveMessage);
-      socket.current.on('receive-channel-message', receiveChannelMessage);
+      window.addEventListener('beforeunload', handleBeforeUnload);
 
       return () => {
-        if (socket.current) {
-          socket.current.disconnect();
-        }
+        window.addEventListener('beforeunload', handleBeforeUnload);
       };
     }
   }, [user]);
 
   return (
-    <SocketContext.Provider value={socket.current}>
+    <SocketContext.Provider value={{ socket: socket }}>
       {children}
     </SocketContext.Provider>
   );

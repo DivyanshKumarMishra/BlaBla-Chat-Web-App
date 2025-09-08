@@ -1,100 +1,154 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  selectedChatType: null,
   selectedChat: null,
   selectedChatMessages: [],
-  dms: [],
+  typingUsers: [],
+  onlineStatusMap: {},
+  chats: [],
+  notifications: [],
+  userOnline: false,
   isUploading: false,
-  isDownloading:false,
-  channels:[],
+  isDownloading: false,
+  activeTab: 'dm'
 };
 
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
+    setActiveTab: (state, action) => {
+      state.activeTab = action.payload;
+    },
+
     setChatInfo: (state, action) => {
-      state.selectedChatType = action.payload.selectedChatType;
-      state.selectedChat = action.payload.selectedChat;
-      state.selectedChatMessages = action.payload?.selectedChatMessages
-      state.dms = action.payload?.dms?.length ? action.payload.dms : state.dms;
-      state.isUploading = action.payload.isUploading || false
-      state.isDownloading = action.payload.isDownloading || false
-      state.channels = action.payload?.channels?.length ? action.payload.channels : state.channels
+      state.selectedChat = action.payload;
+    },
+
+    setChats: (state, action) => {
+      state.chats = Array.isArray(action.payload)
+        ? action.payload
+        : [action.payload, ...state.chats];
     },
 
     addMessagesToChat: (state, action) => {
-      const { multiple, messages } = action.payload;
-      const normalizedMessages = Array.isArray(messages) ? messages : [messages];
-      const formattedMessages = normalizedMessages.map(({ sender, receiver, messageType, content, fileUrl, timestamp }) => ({
-        messageType,
-        content,
-        fileUrl,
-        timestamp,
-        receiver,
-        sender
-      }));
-    
-      state.selectedChatMessages = multiple
-        ? formattedMessages
-        : [...(state.selectedChatMessages || []), ...formattedMessages]
-    },   
+      const messages = action.payload;
 
-    setDMs: (state, action) => {
-      state.dms = action.payload
+      state.selectedChatMessages = Array.isArray(messages)
+        ? messages
+        : [...state.selectedChatMessages, messages];
+
+      // Determine the latest message based on createdAt
+      let latestMessage = null;
+      if (Array.isArray(messages)) {
+        latestMessage = messages.reduce((latest, msg) => {
+          if (!latest) return msg;
+          return new Date(msg.createdAt) > new Date(latest.createdAt)
+            ? msg
+            : latest;
+        }, null);
+      } else {
+        latestMessage = messages;
+      }
+
+      if (latestMessage) {
+        const chatIndex = state.chats.findIndex(
+          (c) => c._id === latestMessage.chat._id
+        );
+
+        if (chatIndex > -1) {
+          state.chats[chatIndex].latestMessage = latestMessage;
+        }
+      }
+    },
+
+    addToNotifications: (state, action) => {
+      state.notifications = Array.isArray(action.payload)
+        ? action.payload
+        : [action.payload, ...state.notifications];
+    },
+
+    addMessageToSpecificChat: (state, action) => {
+      const chatId = action.payload?.chat?._id;
+      const chatIndex = state.chats.findIndex((c) => c._id === chatId);
+
+      if (chatIndex !== -1) {
+        state.chats[chatIndex].messages = [
+          action.payload,
+          ...state.chats[chatIndex].messages,
+        ];
+
+        state.chats[chatIndex].latestMessage = action.payload;
+      }
+    },
+
+    sortChats: (state) => {
+      state.chats.sort((a, b) => {
+        const aTime =
+          a.latestMessage && a.latestMessage.createdAt
+            ? new Date(a.latestMessage.createdAt)
+            : new Date(a.updatedAt);
+
+        const bTime =
+          b.latestMessage && b.latestMessage.createdAt
+            ? new Date(b.latestMessage.createdAt)
+            : new Date(b.updatedAt);
+
+        return bTime - aTime;
+      });
     },
 
     closeChat: (state) => {
-      state.selectedChatType = '';
       state.selectedChat = null;
       state.selectedChatMessages = [];
     },
 
     setIsUploading: (state, action) => {
-      state.isUploading = action.payload
+      state.isUploading = action.payload;
     },
 
     setIsDownloading: (state, action) => {
-      state.isDownloading = action.payload
+      state.isDownloading = action.payload;
     },
 
-    setChannels: (state, action) => {
-      state.channels = Array.isArray(action.payload) ? action.payload : [action.payload]
-    },
-
-    sortChannels: (state, action) => {
-      const index = state.channels.findIndex(channel => channel._id === action.payload.channelId)
-      if(index !== -1 && index !== undefined){
-        const [recent_channel] = state.channels.splice(index,1)
-        state.channels.unshift(recent_channel)
+    setTypingUser: (state, action) => {
+      if (!state.typingUsers.includes(action.payload)) {
+        state.typingUsers.push(action.payload);
       }
     },
 
-    sortDMs: (state, action) => {
-      const { message, userId } = action.payload
-      const fromId = message.sender._id === userId ? message.receiver._id : message.sender._id
-      const fromData = message.sender._id === userId ? message.receiver : message.sender
-      const index = state.dms.findIndex(dm => dm._id === fromId)
-      if(index !== -1 && index !== undefined){
-        const [recent_dm] = state.dms.splice(index,1)
-        state.dms.unshift(recent_dm)
-      }else{
-        state.dms.unshift(fromData)
+    removeTypingUser: (state, action) => {
+      state.typingUsers = state.typingUsers.filter(
+        (tu) =>
+          tu.userId !== action.payload.userId &&
+          tu.roomId !== action.payload.roomId
+      );
+    },
+
+    updateUserStatus: (state, action) => {
+      if (Array.isArray(action.payoad)) {
+        state.onlineStatusMap = action.payload;
+      } else {
+        const { user_id, online } = action.payload;
+        state.onlineStatusMap[user_id] = online;
       }
-    }
+    },
   },
 });
 
 export const {
+  setActiveTab,
   setChatInfo,
+  setChats,
   closeChat,
   addMessagesToChat,
-  setDMs,
+  addToNotifications,
+  addMessageToSpecificChat,
+  sortChats,
   setIsUploading,
   setIsDownloading,
-  setChannels, 
-  sortChannels, 
-  sortDMs
+  setTypingUser,
+  removeTypingUser,
+  updateUserStatus,
 } = chatSlice.actions;
 export default chatSlice.reducer;

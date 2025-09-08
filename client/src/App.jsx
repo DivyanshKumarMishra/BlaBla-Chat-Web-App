@@ -3,7 +3,7 @@ import {BrowserRouter, Navigate, Routes, Route} from 'react-router-dom'
 import {Auth, Chat, Profile} from './pages'
 import {useSelector, useDispatch} from 'react-redux'
 import axiosInstance from './services/axios'
-import { PROFILE_ROUTE } from './utils/constants'
+import { USER_URL } from './utils/constants'
 import {setUserInfo} from './slices/UserSlice'
 import Notification from './components/common/Notification'
 import Spinner from './components/common/Spinner'
@@ -21,7 +21,7 @@ function App() {
       try {
         setLoading(true)
         if(!isLoggedIn){
-          const userInfo = await axiosInstance.get(`${PROFILE_ROUTE}/user-info`, {withCredentials: true})
+          const userInfo = await axiosInstance.get(USER_URL, {withCredentials: true})
           // console.log(userInfo)
           if(userInfo?.status === 200 && userInfo?.data) dispatch(setUserInfo(userInfo.data._doc || userInfo.data))
         }
@@ -29,10 +29,12 @@ function App() {
         setNotificationText({message: error.message, type: 'error'})
       }finally{
         setLoading(false)
+        setNotificationText({})
       }
     }
+
     getUserInfo()
-  }, [dispatch])
+  }, [])
 
   if (loading) {
     return (
@@ -44,7 +46,7 @@ function App() {
 
   return (
     <>
-      {notificationText.message && <Notification message={notificationText.message} type={notificationText.type} />}
+      {/* {notificationText.message && <Notification message={notificationText.message} type={notificationText.type} />} */}
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />

@@ -74,7 +74,7 @@ function ChatContainer({
   }, []);
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] bg-indigo-100 flex flex-col text-black">
+    <div className="h-[calc(100vh-3.5rem)] bg-indigo-100 flex flex-col text-blackbg-indigo-100">
       <ChatHeader
         handleSidebar={handleSidebar}
         handleModal={handleModal}
@@ -88,6 +88,7 @@ function ChatContainer({
         fetchChatMessages={fetchChatMessages}
       />
       <MessageBar setNotificationText={setNotificationText} />
+
       <Modal
         open={modalOpen}
         closeModal={handleModal}

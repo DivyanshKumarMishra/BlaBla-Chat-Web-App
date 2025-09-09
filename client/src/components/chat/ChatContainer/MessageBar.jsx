@@ -9,30 +9,31 @@ import { useSelector, useDispatch } from 'react-redux';
 import EmojiPick from '../../common/EmojiPick';
 import { useSocket } from '../../../contexts/SocketContext';
 import axiosInstance from '../../../services/axios';
-import { HOST } from '../../../utils/constants';
 import {
   addMessagesToChat,
   setIsUploading,
   sortChats,
 } from '../../../slices/ChatSlice';
-import { checkIfImage } from '../../../utils';
-import Drawer from '../../common/Drawer';
-import Tooltip from '../../common/Tooltip';
 import { MESSAGE_URL } from '../../../utils/constants';
+// import { checkIfImage } from '../../../utils';
+// import Drawer from '../../common/Drawer';
+// import Tooltip from '../../common/Tooltip';
+// import { HOST } from '../../../utils/constants';
 
 function MessageBar({ setNotificationText = () => {} }) {
   const { socket } = useSocket();
   const { selectedChat } = useSelector((state) => state.chatData);
   const { user } = useSelector((state) => state.userData);
-  const [fileUrls, setFileUrls] = useState([]);
   const [message, setMessage] = useState('');
-  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [open, setOpen] = useState(false);
-  const fileInputRef = useRef(null);
   const emojiRef = useRef(null);
+  const msgInputRef = useRef(null);
   const dispatch = useDispatch();
   const [isTyping, setIsTyping] = useState(false);
   const typingTimer = useRef(null);
+  // const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
+  // const [fileUrls, setFileUrls] = useState([]);
+  // const fileInputRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -46,6 +47,12 @@ function MessageBar({ setNotificationText = () => {} }) {
       document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [emojiRef]);
+
+  useEffect(() => {
+    if (selectedChat && msgInputRef.current) {
+      msgInputRef.current.focus();
+    }
+  }, [selectedChat]);
 
   // const handleFileClick = () => {
   //   fileInputRef.current && fileInputRef.current.click();
@@ -100,7 +107,7 @@ function MessageBar({ setNotificationText = () => {} }) {
   //   }
   // };
 
-  const sendNewMessage = async (e) => {
+  const sendNewMessage = async () => {
     try {
       const response = await axiosInstance.post(MESSAGE_URL, {
         content: message,
@@ -127,8 +134,8 @@ function MessageBar({ setNotificationText = () => {} }) {
   };
 
   return (
-    <div className="h-[10vh] bg-white border-t-2 border-gray-300 flex justify-center items-center px-4">
-      {fileUrls.length > 0 && (
+    <div className="h-16 bg-white border-t-2 border-gray-300 flex justify-center items-center px-4">
+      {/* {fileUrls.length > 0 && (
         <Drawer
           open={previewDrawerOpen}
           setOpen={setPreviewDrawerOpen}
@@ -160,7 +167,6 @@ function MessageBar({ setNotificationText = () => {} }) {
                         </span>
                       </div>
                     )}
-                    {/* Cross button */}
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(index)}
@@ -168,7 +174,6 @@ function MessageBar({ setNotificationText = () => {} }) {
                     >
                       <XMarkIcon className="h-3 w-3" />
                     </button>
-                    {/* Transparent overlay with +N */}
                     {isLastVisible && (
                       <div className="absolute inset-0 bg-opacity-0 hover:bg-gray-500/80 flex items-center justify-center text-white font-semibold text-sm transition">
                         +{remainingCount}
@@ -180,12 +185,13 @@ function MessageBar({ setNotificationText = () => {} }) {
             </div>
           </div>
         </Drawer>
-      )}
+      )} */}
       <div className="flex-1 flex items-center">
         <div className="flex flex-1 items-center bg-white border-2 border-indigo-200 rounded-md px-3 py-1 gap-3">
           <textarea
             id="msgInput"
             name="msgInput"
+            ref={msgInputRef}
             rows={1}
             className="flex-1 resize-none bg-transparent focus:outline-none text-black break-words overflow-y-auto max-h-[20vh]"
             placeholder="Enter message"
@@ -228,10 +234,11 @@ function MessageBar({ setNotificationText = () => {} }) {
         <button
           type="button"
           onClick={sendNewMessage}
-          disabled={
-            (!message && fileUrls.length === 0) ||
-            (message && fileUrls.length > 0)
-          }
+          disabled={!message}
+          // disabled={
+          //   (!message && fileUrls.length === 0) ||
+          //   (message && fileUrls.length > 0)
+          // }
           className="ml-3 bg-primary text-white p-2 rounded-full transition duration-300 disabled:bg-gray-400 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         >
           <PaperAirplaneIcon className="w-5 h-5" />

@@ -6,7 +6,7 @@ import AppHeader from '../common/Header';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn } = useSelector((state) => state.userData);
-  const {selectedChat} = useSelector((state) => state.chatData);
+  const { selectedChat } = useSelector((state) => state.chatData);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

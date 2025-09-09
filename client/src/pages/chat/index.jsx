@@ -23,6 +23,15 @@ function Chat() {
     type: '',
   });
 
+  // Detect mobile view
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   async function fetchChats() {
     try {
       const response = await axiosInstance.get(GET_ALL_CHATS_URL);
@@ -86,13 +95,15 @@ function Chat() {
 
       <div className="relative flex flex-1 overflow-hidden">
         {/* Mobile Sidebar */}
-        <Drawer open={isSidebarOpen} setOpen={handleSidebar} side="left">
-          <ContactsContainer
-            isSidebarOpen={isSidebarOpen}
-            handleSidebar={handleSidebar}
-            handleLogout={handleLogout}
-          />
-        </Drawer>
+        {isMobile && (
+          <Drawer open={isSidebarOpen} setOpen={setIsSidebarOpen} side="left">
+            <ContactsContainer
+              isSidebarOpen={isSidebarOpen}
+              handleSidebar={handleSidebar}
+              handleLogout={handleLogout}
+            />
+          </Drawer>
+        )}
 
         {/* Desktop Sidebar */}
         <div className="hidden md:block w-1/3 bg-white border-r-3 border-gray-300 shadow-lg mt-14">
@@ -104,16 +115,21 @@ function Chat() {
 
         {/* Chat container */}
         <div className="flex-1 flex flex-col bg-indigo-200">
-          <Notification
-            message={notificationText.message}
-            description={notificationText.description}
-            type={notificationText.type}
-            onClose={() => setNotificationText({})}
-          />
+          {notificationText.length > 0 && (
+            <Notification
+              message={notificationText.message}
+              description={notificationText.description}
+              type={notificationText.type}
+              onClose={() => setNotificationText({})}
+            />
+          )}
 
           <div className="flex-1 flex-col h-full mt-14">
             {selectedChat ? (
-              <ChatContainer handleSidebar={handleSidebar} setNotificationText={setNotificationText}/>
+              <ChatContainer
+                handleSidebar={handleSidebar}
+                setNotificationText={setNotificationText}
+              />
             ) : (
               <EmptyChatContainer handleSidebar={handleSidebar} />
             )}

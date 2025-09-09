@@ -43,6 +43,10 @@ function ContactList({ isGroup = false, handleSidebar = () => {} }) {
               }`}
             onClick={(e) => {
               handleClick(chat);
+              setTimeout(() => {
+                const msgInput = document.getElementById('msgInput');
+                msgInput.focus();
+              }, 1000)
             }}
           >
             {!isGroupChat && (

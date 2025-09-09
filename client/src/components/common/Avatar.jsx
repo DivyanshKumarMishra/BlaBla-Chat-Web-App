@@ -39,7 +39,7 @@ function Avatar(
         <span
           className={`inline-flex items-center justify-center rounded-full border-2 border-primary transition-all duration-300 ${className}`}
         >
-          <span className={`uppercase ${textSize} font-semibold text-primary`}>{text}</span>
+          <span className={`uppercase ${textSize} font-semibold text-primary p-2`}>{text}</span>
         </span>
       )}
       {showIcons && hovered && (

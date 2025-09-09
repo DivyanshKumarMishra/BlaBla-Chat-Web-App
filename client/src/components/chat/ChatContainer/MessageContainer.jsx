@@ -296,7 +296,7 @@ function MessageContainer({
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide p-4 px-8 w-full">
       {loading || isUploading || isDownloading ? (
-        <div className="h-full w-full flex flex-col items-center justify-center gap-2">
+        <div className="h-full w-full  flex flex-col items-center justify-center gap-2">
           <Spinner className="size-36" />
           <p className="poppins-medium text-lg text-gray-500">
             {loading

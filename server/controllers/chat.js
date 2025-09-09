@@ -52,7 +52,7 @@ const fetchChats = async (req, res, next) => {
       })
       .sort({ updatedAt: -1 });
 
-    if (chats.length < 0) return sendErrorResponse(res, 'No chats found', 400);
+    // if (chats.length < 0) return sendErrorResponse(res, 'No chats found', 400);
     return res.status(200).json(chats);
   } catch (error) {
     return sendErrorResponse(res, error);

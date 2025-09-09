@@ -47,8 +47,8 @@ const fetchChatMessages = async (req, res, next) => {
       .populate('sender', '-password')
       .populate('chat');
 
-    if (messages.length <= 0)
-      return sendErrorResponse(res, 'No messages found', 400);
+    // if (messages.length <= 0)
+    //   return sendErrorResponse(res, 'No messages found', 400);
     return res.status(200).json(messages);
   } catch (error) {
     return sendErrorResponse(res, error);

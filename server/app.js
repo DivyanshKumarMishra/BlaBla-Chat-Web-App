@@ -54,9 +54,9 @@ app.use(errorHandler);
 
 async function runServer() {
   try {
-    server.listen(port, host, async () => {
+    server.listen(port, async () => {
       await connectToDB();
-      console.log(`server started on port http://${host}:${port}`.cyan);
+      console.log(`server started on port ${port}`.cyan);
       setupCircuit(server);
     });
   } catch (error) {

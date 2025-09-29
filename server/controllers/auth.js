@@ -44,14 +44,12 @@ const signup = [
         }
         const new_user = new User({ name, email, password, image });
         const saved_user = await new_user.save();
-        return res
-          .status(201)
-          .json({
-            name: saved_user.name,
-            email: saved_user.email,
-            id: saved_user._id,
-            image: saved_user.image,
-          });
+        return res.status(201).json({
+          name: saved_user.name,
+          email: saved_user.email,
+          id: saved_user._id,
+          image: saved_user.image,
+        });
       } catch (error) {
         return sendErrorResponse(res, {
           message: 'Error creating your account',
@@ -73,8 +71,8 @@ const login = async (req, res, next) => {
     res.cookie('jwt', token, {
       httpOnly: true,
       maxAge,
-      secure: false,
-      sameSite: 'Lax',
+      secure: true,
+      sameSite: 'none',
     });
     return res.status(200).json({
       name: user.name,

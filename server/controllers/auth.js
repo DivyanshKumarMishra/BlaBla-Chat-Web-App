@@ -93,8 +93,8 @@ const logout = async (req, res, next) => {
     res.clearCookie('jwt', {
       httpOnly: true,
       maxAge,
-      secure: false,
-      sameSite: 'Lax',
+      secure: true,
+      sameSite: 'none',
     });
     return res.status(200).json({ message: 'You have been signed out' });
   } catch (error) {
